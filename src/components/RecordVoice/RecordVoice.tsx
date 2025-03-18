@@ -1,23 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Box, Button, Text } from '@chakra-ui/react'
 import LetterCarousel from './LetterCarousel'
 
-// Function to check microphone permission status
 async function checkMicrophonePermission() {
     if (!navigator.permissions) {
-        return 'unknown' // Older browsers may not support the Permissions API
+        return 'unknown'
     }
     try {
-        // @ts-ignore - 'microphone' is a valid value but TypeScript definitions may be outdated
+        // @ts-ignore - Permissions API
         const permissionStatus = await navigator.permissions.query({ name: 'microphone' })
-        return permissionStatus.state // 'granted', 'denied', or 'prompt'
+        return permissionStatus.state
     } catch (error) {
         console.error('Error checking mic permissions:', error)
         return 'unknown'
     }
 }
 
-// Browser-safeguard getUserMedia wrapper:
 async function getMicrophoneAccess() {
     if (navigator.mediaDevices?.getUserMedia) {
         return navigator.mediaDevices.getUserMedia({ audio: true })
@@ -26,9 +24,26 @@ async function getMicrophoneAccess() {
 }
 
 export default function RecordVoice() {
-    const [hasMicPermission, setHasMicPermission] = useState(false)
+    const [hasMicPermission, setHasMicPermission] = useState<boolean | null>(null)
     const [micError, setMicError] = useState<string | null>(null)
     const [micBlocked, setMicBlocked] = useState(false)
+
+    // Check microphone permissions automatically on mount
+    useEffect(() => {
+        async function autoCheckMicPermission() {
+            const micPermission = await checkMicrophonePermission()
+
+            if (micPermission === 'granted') {
+                setHasMicPermission(true)
+            } else if (micPermission === 'denied') {
+                setMicBlocked(true)
+            } else {
+                setHasMicPermission(false)
+            }
+        }
+
+        autoCheckMicPermission()
+    }, [])
 
     async function requestMicPermission() {
         try {
@@ -49,6 +64,11 @@ export default function RecordVoice() {
         }
     }
 
+    if (hasMicPermission === null) {
+        // Permission status is loading...
+        return null
+    }
+
     if (micBlocked) {
         return (
             <Box textAlign="center" mx="auto" maxW="800px" mt={8} p={4}>
@@ -66,7 +86,6 @@ export default function RecordVoice() {
                     borderRadius="md"
                     maxW="300px"
                     mx="auto"
-
                 >
                     <Text>1️⃣ Open your browser settings.</Text>
                     <Text>2️⃣ Find "Privacy & Security" or "Site Settings".</Text>

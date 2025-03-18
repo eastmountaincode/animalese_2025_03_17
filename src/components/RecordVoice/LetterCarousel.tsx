@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Box, Flex, Button, Text, useBreakpointValue } from '@chakra-ui/react'
+import { Box, Flex, Button, Text, useBreakpointValue, Popover, Portal } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
-import LetterCard from './LetterCard'
+import LetterCard from './LetterCard/LetterCard'
 
 const MotionFlex = motion(Flex)
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+import { clearAllRecordings } from '../../idb/recordings_db'
 
 export default function LetterCarousel() {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [animateX, setAnimateX] = useState(0)
-
+    const [resetPopoverOpen, setResetPopoverOpen] = useState(false)
     const cardWidth = 250
     const gapSize = 16
 
@@ -18,6 +19,21 @@ export default function LetterCarousel() {
 
     const nextLetter = () => setCurrentIndex((curr) => Math.min(curr + 1, alphabet.length - 1))
     const prevLetter = () => setCurrentIndex((curr) => Math.max(curr - 1, 0))
+
+    // -- CLEAR ALL RECORDINGS --
+    async function handleResetAllRecordings() {
+        try {
+            await clearAllRecordings()
+            console.log('All recordings have been cleared.')
+
+            // Dispatch a global event so each LetterCardPlayTrim can recheck
+            window.dispatchEvent(new CustomEvent('all-recordings-cleared'))
+            // Then close the popover if you'd like:
+            setResetPopoverOpen(false)
+        } catch (error) {
+            console.error('Error clearing all recordings:', error)
+        }
+    }
 
     useEffect(() => {
         const totalCardWidth = cardWidth + gapSize
@@ -86,6 +102,28 @@ export default function LetterCarousel() {
                 <Text mt={4}>
                     {currentIndex + 1} / {alphabet.length}
                 </Text>
+
+                {/* Reset Recordings Button */}
+                <Popover.Root open={resetPopoverOpen} onOpenChange={(e) => setResetPopoverOpen(e.open)} positioning={{ placement: 'top' }}>
+                    <Popover.Trigger asChild>
+                        <Button size="xs" variant="outline">
+                            Reset All Recordings
+                        </Button>
+                    </Popover.Trigger>
+                    <Portal>
+                        <Popover.Positioner>
+                            <Popover.Content w="fit-content">
+                                <Popover.Arrow />
+                                <Popover.Body>
+                                    <Flex direction="column" gap={2} align="center">
+                                        <Text>Are you sure?</Text>
+                                        <Button onClick={handleResetAllRecordings} variant="outline" size="xs">Yes</Button>
+                                    </Flex>
+                                </Popover.Body>
+                            </Popover.Content>
+                        </Popover.Positioner>
+                    </Portal>
+                </Popover.Root>
             </Flex>
         </Box>
     )
