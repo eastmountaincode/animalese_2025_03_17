@@ -1,7 +1,7 @@
 import { Box, Heading, Tabs, Image, Text } from '@chakra-ui/react'
 import './App.css'
 import HowItWorks from './components/HowItWorks'
-import RecordVoice from './components/RecordVoice'
+import RecordVoice from './components/RecordVoice/RecordVoice'
 import CreateVoice from './components/CreateVoice'
 
 

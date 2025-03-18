@@ -1,25 +1,23 @@
 import { useState, useEffect } from 'react'
-import { Box, Button, Text, Flex, useBreakpointValue } from '@chakra-ui/react'
-import LetterCard from './LetterCard'
+import { Box, Flex, Button, Text, useBreakpointValue } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
+import LetterCard from './LetterCard'
 
 const MotionFlex = motion(Flex)
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
-export default function RecordVoice() {
+export default function LetterCarousel() {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [animateX, setAnimateX] = useState(0)
-
-    const nextLetter = () => setCurrentIndex((current) => Math.min(current + 1, alphabet.length - 1))
-    const prevLetter = () => setCurrentIndex((current) => Math.max(current - 1, 0))
 
     const cardWidth = 250
     const gapSize = 16
 
     const isMobile = useBreakpointValue({ base: true, md: false })
-
-    // Optimal viewport widths for ideal peeking:
     const viewportWidth = isMobile ? cardWidth + 40 : cardWidth + 100
+
+    const nextLetter = () => setCurrentIndex((curr) => Math.min(curr + 1, alphabet.length - 1))
+    const prevLetter = () => setCurrentIndex((curr) => Math.max(curr - 1, 0))
 
     useEffect(() => {
         const totalCardWidth = cardWidth + gapSize
@@ -27,12 +25,11 @@ export default function RecordVoice() {
 
         let newX = -(currentIndex * totalCardWidth - centerOffset)
 
-        // Clearly enforced boundaries to perfectly center A and Z
-        const maxOffset = viewportWidth / 2 - cardWidth / 2
+        // Boundaries to keep A and Z centered
+        const maxOffset = centerOffset
         const minOffset = -(alphabet.length * totalCardWidth - gapSize - viewportWidth + centerOffset)
 
         newX = Math.min(maxOffset, Math.max(minOffset, newX))
-
         setAnimateX(newX)
     }, [currentIndex, viewportWidth])
 
@@ -48,7 +45,6 @@ export default function RecordVoice() {
                         ←
                     </Button>
 
-                    {/* VIEWPORT INTO CARDS */}
                     <Box
                         width={`${viewportWidth}px`}
                         height="320px"
