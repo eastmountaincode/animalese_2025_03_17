@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Box, Button } from '@chakra-ui/react'
-import { storeRecording } from '../../../idb/recordings_db'
+import { getRecording, storeRecording } from '../../../idb/recordings_db'
 
 interface LetterCardRecordProps {
   letter: string
@@ -9,6 +9,41 @@ interface LetterCardRecordProps {
 export default function LetterCardRecord({ letter }: LetterCardRecordProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const [hasRecording, setHasRecording] = useState(false)
+
+  // Check if a recording already exists in IndexedDB for this letter
+  async function checkRecording() {
+    const blob = await getRecording(letter)
+    setHasRecording(Boolean(blob))
+  }
+
+  useEffect(() => {
+    // On mount or if 'letter' changes, see if there's already a recording
+    checkRecording()
+
+    // If everything gets cleared, update hasRecording to false
+    function handleAllRecordingsCleared() {
+      setHasRecording(false)
+    }
+
+    // If a new recording is stored for this letter, update accordingly
+    function handleRecordingStored(e: Event) {
+      const { detail } = e as CustomEvent<{ letter: string }>
+      if (detail.letter === letter) {
+        setHasRecording(true)
+      }
+    }
+
+    // Listen for these custom events
+    window.addEventListener('all-recordings-cleared', handleAllRecordingsCleared)
+    window.addEventListener('recording-stored', handleRecordingStored)
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('all-recordings-cleared', handleAllRecordingsCleared)
+      window.removeEventListener('recording-stored', handleRecordingStored)
+    }
+  }, [letter])
 
   async function handleRecordClick() {
     try {
@@ -32,7 +67,7 @@ export default function LetterCardRecord({ letter }: LetterCardRecordProps) {
           const audioBlob = new Blob(chunks, { type: 'audio/webm' })
           await storeRecording(letter, audioBlob)
 
-          // Dispatch a custom event so other components know this letter now has a recording
+          // Dispatch so other components know this letter now has a recording
           const event = new CustomEvent('recording-stored', { detail: { letter } })
           window.dispatchEvent(event)
         }
@@ -51,10 +86,21 @@ export default function LetterCardRecord({ letter }: LetterCardRecordProps) {
     }
   }
 
+  // Render different button text:
+  // - If recording is ongoing: "Stop Recording"
+  // - Else if there's a previously stored recording: "Re-record"
+  // - Else: "Record"
+  let buttonLabel = 'Record'
+  if (isRecording) {
+    buttonLabel = 'Stop Recording'
+  } else if (hasRecording) {
+    buttonLabel = 'Record Again'
+  }
+
   return (
     <Box border="1px solid blue" w="100%">
       <Button w="80%" onClick={handleRecordClick}>
-        {isRecording ? 'Stop Recording' : 'Record'}
+        {buttonLabel}
       </Button>
     </Box>
   )
