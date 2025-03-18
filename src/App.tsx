@@ -1,6 +1,5 @@
 import { Box, Heading, Tabs, Image, Text } from '@chakra-ui/react'
 import './App.css'
-import { LuFolder, LuSquareCheck, LuUser } from 'react-icons/lu'
 import HowItWorks from './components/HowItWorks'
 import RecordVoice from './components/RecordVoice'
 import CreateVoice from './components/CreateVoice'
@@ -10,7 +9,7 @@ function AppContent() {
   return (
     <Box w="100%" display="flex" flexDir="column" alignItems="center" p={4}>
       <Heading maxW="md" mb={2} display="flex" flexDir="column" alignItems="center">
-        <Image src="assets/ac_header.png" maxH="120px" md={{maxH:"160px"}} />
+        <Image src="assets/ac_header.png" maxH="80px" md={{maxH:"160px"}} />
       </Heading>
       <Box w="100%">
         <Tabs.Root defaultValue="record-voice" justify="center" variant="outline">
