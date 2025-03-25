@@ -1,76 +1,82 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Box, Button } from '@chakra-ui/react'
-import { getRecording } from '../../../idb/recordings_db'
+import { getRecording, storeRecording } from '../../../idb/recordings_db'
+import TrimSound from './TrimSound'
 
 interface LetterCardPlayTrimProps {
   letter: string
 }
 
 export default function LetterCardPlayTrim({ letter }: LetterCardPlayTrimProps) {
-  const [hasRecording, setHasRecording] = useState(false)
+  const [currentAudio, setCurrentAudio] = useState<Blob | null>(null)
+  const trimSoundRef = useRef<any>(null)
 
-  async function checkRecording() {
+  async function loadRecording() {
     const blob = await getRecording(letter)
-    setHasRecording(Boolean(blob))
+    setCurrentAudio(blob)
   }
 
   useEffect(() => {
-    // 1) Check if a recording already exists on mount (and whenever 'letter' changes)
-    checkRecording()
+    // Load recording when component mounts or when the letter changes
+    loadRecording()
 
-    // 2) Handle single-letter recording
+    // Handle events for recording updates
     function handleRecordingStored(e: Event) {
       const { detail } = e as CustomEvent<{ letter: string }>
-      // Only re-check the DB if the recorded letter matches this component's letter
       if (detail.letter === letter) {
-        checkRecording()
+        loadRecording()
       }
     }
 
-    // 3) Handle the global reset
     function handleAllRecordingsCleared() {
-      // Since the entire DB is cleared, there's definitely no recording for this letter
-      setHasRecording(false)
+      setCurrentAudio(null)
     }
 
-    // Add both event listeners
     window.addEventListener('recording-stored', handleRecordingStored)
     window.addEventListener('all-recordings-cleared', handleAllRecordingsCleared)
 
-    // Cleanup when unmounting
     return () => {
       window.removeEventListener('recording-stored', handleRecordingStored)
       window.removeEventListener('all-recordings-cleared', handleAllRecordingsCleared)
     }
-  }, [letter]) // Re-run effect if 'letter' changes
+  }, [letter])
 
   async function handlePlayClick() {
-    try {
-      const blob = await getRecording(letter)
-      if (!blob) {
-        console.warn(`No recording found for letter: ${letter}`)
-        return
-      }
-      const audioURL = URL.createObjectURL(blob)
-      const audio = new Audio(audioURL)
-      audio.play()
-    } catch (error) {
-      console.error('Error playing recording:', error)
+    if (!currentAudio) {
+      console.warn(`No recording found for letter: ${letter}`)
+      return
     }
+    // Always play from the beginning regardless of current playback state
+    trimSoundRef.current?.playFromBeginning()
+  }
+
+  async function handleTrimmed(trimmedBlob: Blob) {
+    // Update the state and persist the new (trimmed) recording
+    setCurrentAudio(trimmedBlob)
+    await storeRecording(letter, trimmedBlob)
+    window.dispatchEvent(new CustomEvent('recording-stored', { detail: { letter } }))
   }
 
   return (
-    <Box border="1px solid red" w="100%">
+    <Box w="100%">
       <Button
         variant="outline"
         size="lg"
         w="80%"
         onClick={handlePlayClick}
-        disabled={!hasRecording}
-        fontSize={hasRecording ? 'md' : 'xs'}
+        disabled={!currentAudio}
+        fontSize={currentAudio ? 'md' : 'xs'}
       >
-        {hasRecording ? 'Play' : 'No Recording Available'}
+        {currentAudio ? 'Play' : 'No Recording Available'}
       </Button>
+      <Box mt={4} w="80%" mx="auto">
+        {currentAudio ? (
+          <TrimSound ref={trimSoundRef} audioBlob={currentAudio} onTrimmed={handleTrimmed} />
+        ) : (
+          // Always reserve the trim area's height even if no recording exists
+          <Box h="45px" border="1px dashed gray" />
+        )}
+      </Box>
     </Box>
   )
 }

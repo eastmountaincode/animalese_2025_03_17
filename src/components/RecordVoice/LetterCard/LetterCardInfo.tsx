@@ -6,7 +6,7 @@ interface LetterCardInfoProps {
 
 export default function LetterCardInfo({ letter }: LetterCardInfoProps) {
     return (
-        <Box border="1px solid green">
+        <Box>
             <Text fontSize="3xl" fontWeight="bold">
                 {letter}
             </Text>

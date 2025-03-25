@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Box, Flex, Button, Text, useBreakpointValue, Popover, Portal } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import LetterCard from './LetterCard/LetterCard'
+import ProgressBar from './ProgressBar'
 
 const MotionFlex = motion(Flex)
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -16,6 +17,7 @@ export default function LetterCarousel() {
 
     const isMobile = useBreakpointValue({ base: true, md: false })
     const viewportWidth = isMobile ? cardWidth + 40 : cardWidth + 100
+    const currentLetter = alphabet[currentIndex]
 
     const nextLetter = () => setCurrentIndex((curr) => Math.min(curr + 1, alphabet.length - 1))
     const prevLetter = () => setCurrentIndex((curr) => Math.max(curr - 1, 0))
@@ -51,6 +53,7 @@ export default function LetterCarousel() {
 
     return (
         <Box textAlign="center" mx="auto" maxW="800px">
+            <ProgressBar currentLetter={currentLetter} />
             <Flex direction="column" align="center" gap={4}>
                 <Flex align="center" justify="center" gap={4} width="100%">
                     <Button

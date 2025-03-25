@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Box, Button } from '@chakra-ui/react'
 import { getRecording, storeRecording } from '../../../idb/recordings_db'
+import processAudioBlob from '../../../util/audioHelper'
 
 interface LetterCardRecordProps {
   letter: string
@@ -62,14 +63,16 @@ export default function LetterCardRecord({ letter }: LetterCardRecordProps) {
         recorder.onstop = async () => {
           // Stop all tracks
           stream.getTracks().forEach((track) => track.stop())
-
-          // Save recording to IndexedDB
-          const audioBlob = new Blob(chunks, { type: 'audio/webm' })
-          await storeRecording(letter, audioBlob)
-
-          // Dispatch so other components know this letter now has a recording
-          const event = new CustomEvent('recording-stored', { detail: { letter } })
-          window.dispatchEvent(event)
+          
+          // Create the raw blob from the recorded chunks
+          const rawBlob = new Blob(chunks, { type: 'audio/webm' })
+        
+          // Process the blob: decode, apply fade, and re-encode to WAV
+          const processedBlob = await processAudioBlob(rawBlob)
+        
+          // Save the processed (smoothed) audio to IndexedDB
+          await storeRecording(letter, processedBlob)
+          window.dispatchEvent(new CustomEvent('recording-stored', { detail: { letter } }))
         }
 
         recorder.start()
@@ -98,7 +101,7 @@ export default function LetterCardRecord({ letter }: LetterCardRecordProps) {
   }
 
   return (
-    <Box border="1px solid blue" w="100%">
+    <Box w="100%">
       <Button w="80%" onClick={handleRecordClick}>
         {buttonLabel}
       </Button>
