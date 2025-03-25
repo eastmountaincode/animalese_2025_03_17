@@ -17,12 +17,7 @@ export default function ProgressBar({ currentLetter }: ProgressBarProps) {
   
   const totalLetters = 26
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
-  
-  // For debugging - only in development
-  if (isDevelopment) {
-    console.log('Progress:', recordedCount, '/', totalLetters, 'Complete:', isComplete)
-    console.log('Recordings:', Object.keys(recordings))
-  }
+
   
   return (
     <Box w="100%" maxW="500px" mx="auto" borderWidth="2px" borderRadius="xl" p={5}>

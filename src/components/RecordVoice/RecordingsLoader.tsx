@@ -3,7 +3,7 @@ import { useSetAtom } from 'jotai'
 import { recordingsAtom } from '../../atoms/recordingAtoms'
 import { getRecording } from '../../idb/recordings_db'
 
-// Component that loads all recordings from IndexedDB and populates the recordingsAtom
+// Simple component that loads all recordings from IndexedDB and sets them in the atom
 export default function RecordingsLoader() {
   const setRecordings = useSetAtom(recordingsAtom)
   
@@ -23,15 +23,15 @@ export default function RecordingsLoader() {
         
         // Update the atom with all recordings
         setRecordings(recordings)
-        console.log(`Loaded ${Object.keys(recordings).length} recordings from IndexedDB`)
       } catch (error) {
         console.error('Error loading recordings:', error)
       }
     }
     
+    // Load recordings on mount
     loadAllRecordings()
     
-    // Listen for recording events to update our state
+    // Listen for recording events
     const handleRecordingStored = async (e: Event) => {
       const { detail } = e as CustomEvent<{ letter: string }>
       const blob = await getRecording(detail.letter)

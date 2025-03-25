@@ -1,11 +1,16 @@
-import { Box, Heading, Tabs, Image, Text } from '@chakra-ui/react'
+import { Box, Heading, Tabs, Image, Text, Flex } from '@chakra-ui/react'
 import './App.css'
 import HowItWorks from './components/HowItWorks'
 import RecordVoice from './components/RecordVoice/RecordVoice'
 import CreateVoice from './components/CreateVoice'
-
+import { useAtomValue } from 'jotai'
+import { isCompleteAtom } from './atoms/recordingAtoms'
+import RecordingsLoader from './components/RecordVoice/RecordingsLoader'
+import { FaBan, FaCheckCircle, FaQuestionCircle } from 'react-icons/fa'
 
 function AppContent() {
+  const isComplete = useAtomValue(isCompleteAtom)
+  
   return (
     <Box w="100%" display="flex" flexDir="column" alignItems="center" p={4}>
       <Heading maxW="md" mb={2} display="flex" flexDir="column" alignItems="center">
@@ -16,7 +21,16 @@ function AppContent() {
           <Tabs.List gap={2}>
             <Tabs.Trigger value="how-it-works" textStyle='xs' sm={{textStyle: 'sm'}}>How it works</Tabs.Trigger>
             <Tabs.Trigger value="record-voice" textStyle='xs' sm={{textStyle: 'sm'}}>Record voice</Tabs.Trigger>
-            <Tabs.Trigger value="create-voice" textStyle='xs' sm={{textStyle: 'sm'}}>Create voice</Tabs.Trigger>
+            <Tabs.Trigger value="create-voice" textStyle='xs' sm={{textStyle: 'sm'}}>
+              <Flex align="center">
+                Create voice
+                {isComplete ? (
+                  <FaCheckCircle color="green" size={16} style={{ marginLeft: '8px' }} />
+                ) : (
+                  <FaBan color="#A0AEC0" size={16} style={{ marginLeft: '8px' }} />
+                )}
+              </Flex>
+            </Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="how-it-works">
             <HowItWorks />
@@ -28,7 +42,6 @@ function AppContent() {
             <CreateVoice />
           </Tabs.Content>
         </Tabs.Root>
-
       </Box>
     </Box>
   )
@@ -37,6 +50,7 @@ function AppContent() {
 function App() {
   return (
     <Box>
+      <RecordingsLoader />
       <AppContent />
     </Box>
   )

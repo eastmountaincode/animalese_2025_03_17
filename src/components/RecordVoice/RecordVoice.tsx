@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Box, Button, Text } from '@chakra-ui/react'
 import LetterCarousel from './LetterCarousel'
-import RecordingsLoader from './RecordingsLoader'
+// We've moved RecordingsLoader to the App component
+// import RecordingsLoader from './RecordingsLoader'
 
 async function checkMicrophonePermission() {
     if (!navigator.permissions) {
@@ -130,10 +131,5 @@ export default function RecordVoice() {
         )
     }
 
-    return (
-        <>
-            <RecordingsLoader />
-            <LetterCarousel />
-        </>
-    )
+    return <LetterCarousel />
 }
