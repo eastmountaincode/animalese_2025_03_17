@@ -6,5 +6,5 @@ export default defineConfig({
   plugins: [
     react(),
   ],
-  base: '/animalese_2025_03_16/'
+  base: '/animalese_2025_03_17/'
 })

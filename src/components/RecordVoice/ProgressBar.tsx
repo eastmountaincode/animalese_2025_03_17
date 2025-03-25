@@ -6,7 +6,6 @@ interface ProgressBarProps {
   currentLetter?: string;
 }
 
-
 export default function ProgressBar({ currentLetter }: ProgressBarProps) {
   const recordedCount = useAtomValue(progressAtom)
   const isComplete = useAtomValue(isCompleteAtom)
