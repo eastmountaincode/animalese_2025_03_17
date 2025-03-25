@@ -1,4 +1,4 @@
-import { Box, Heading, Tabs, Image, Text, Flex } from '@chakra-ui/react'
+import { Box, Heading, Tabs, Image, Flex } from '@chakra-ui/react'
 import './App.css'
 import HowItWorks from './components/HowItWorks'
 import RecordVoice from './components/RecordVoice/RecordVoice'
@@ -6,7 +6,7 @@ import CreateVoice from './components/CreateVoice'
 import { useAtomValue } from 'jotai'
 import { isCompleteAtom } from './atoms/recordingAtoms'
 import RecordingsLoader from './components/RecordVoice/RecordingsLoader'
-import { FaBan, FaCheckCircle, FaQuestionCircle } from 'react-icons/fa'
+import { FaBan, FaCheckCircle } from 'react-icons/fa'
 
 function AppContent() {
   const isComplete = useAtomValue(isCompleteAtom)

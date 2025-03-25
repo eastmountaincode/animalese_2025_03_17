@@ -2,10 +2,6 @@ import { Box, Text, Flex, Badge } from '@chakra-ui/react'
 import { useAtomValue } from 'jotai'
 import { progressAtom, isCompleteAtom, recordingsAtom } from '../../atoms/recordingAtoms'
 
-// Simple flag for development mode - avoids process.env
-const isDevelopment = window.location.hostname === 'localhost' || 
-                      window.location.hostname === '127.0.0.1';
-
 interface ProgressBarProps {
   currentLetter?: string;
 }
