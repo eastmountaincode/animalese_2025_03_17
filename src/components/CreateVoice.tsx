@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Box, Heading, Text, Button } from '@chakra-ui/react'
+import { Box, Heading, Text, Button, Flex } from '@chakra-ui/react'
 import { 
   TextInput, 
   SilenceThresholdControl, 
@@ -22,7 +22,8 @@ const CreateVoice: React.FC = () => {
     whitespacePause,
     setWhitespacePause, 
     isComplete, 
-    generateAnimalese 
+    generateAnimalese,
+    stopSound
   } = useAnimalese();
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -47,6 +48,10 @@ const CreateVoice: React.FC = () => {
 
   const handleSubmit = () => {
     generateAnimalese(inputText);
+  };
+
+  const handleStop = () => {
+    stopSound();
   };
 
   return (
@@ -82,15 +87,24 @@ const CreateVoice: React.FC = () => {
         isPlaying={isPlaying}
       />
       
-      <Button 
-        colorScheme="green" 
-        onClick={handleSubmit}
-        disabled={!inputText.trim() || isPlaying || !isComplete}
-        w="100%"
-        className={isPlaying ? "loading" : ""}
-      >
-        {isPlaying ? "Generating sound..." : "Generate Animalese"}
-      </Button>
+      {isPlaying ? (
+        <Button 
+          colorScheme="red" 
+          onClick={handleStop}
+          w="100%"
+        >
+          Stop Playback
+        </Button>
+      ) : (
+        <Button 
+          colorScheme="green" 
+          onClick={handleSubmit}
+          disabled={!inputText.trim() || !isComplete}
+          w="100%"
+        >
+          Generate Animalese
+        </Button>
+      )}
 
       {!isComplete && (
         <Text color="orange.500" fontSize="sm" mt={2} textAlign="center">

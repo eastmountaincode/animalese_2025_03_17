@@ -4,14 +4,18 @@ import { recordingsAtom, isCompleteAtom } from '../atoms/recordingAtoms';
 
 export const useAnimalese = () => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [silenceThreshold, setSilenceThreshold] = useState(0.15);
-  const [pitch, setPitch] = useState(1.0);
-  const [speed, setSpeed] = useState(1.0);
-  const [whitespacePause, setWhitespacePause] = useState(0.3); // Default pause for whitespace
+  const [silenceThreshold, setSilenceThreshold] = useState(0.175);
+  const [pitch, setPitch] = useState(1.35);
+  const [speed, setSpeed] = useState(1.3);
+  const [whitespacePause, setWhitespacePause] = useState(0.06); // Default pause for whitespace
   const isComplete = useAtomValue(isCompleteAtom);
-  const recordings = useAtomValue(recordingsAtom);
+  const recordings = useAtomValue(recordingsAtom)
   const audioContextRef = useRef<AudioContext | null>(null);
   const trimmedBufferCache = useRef<Record<string, AudioBuffer>>({});
+  
+  // Add a ref to store active audio nodes so we can stop them
+  const activeSourcesRef = useRef<AudioScheduledSourceNode[]>([]);
+  const stopRequestedRef = useRef<boolean>(false);
 
   // Create AudioContext on first interaction
   useEffect(() => {
@@ -22,6 +26,7 @@ export const useAnimalese = () => {
       }
       // Clear buffer cache on unmount
       trimmedBufferCache.current = {};
+      stopSound(); // Stop any playing sounds on unmount
     };
   }, []);
 
@@ -37,6 +42,28 @@ export const useAnimalese = () => {
       audioContextRef.current.resume();
     }
     return audioContextRef.current;
+  };
+
+  // Function to stop all playing sounds
+  const stopSound = () => {
+    // Stop all active sources
+    activeSourcesRef.current.forEach(source => {
+      try {
+        source.stop();
+        source.onended = null; // Remove event listeners
+      } catch (err) {
+        // Ignore errors if source was already stopped
+      }
+    });
+    
+    // Clear the array
+    activeSourcesRef.current = [];
+    
+    // Reset the flag
+    stopRequestedRef.current = false;
+    
+    // Update the playing state
+    setIsPlaying(false);
   };
 
   // Function to trim silence from an audio buffer
@@ -135,6 +162,11 @@ export const useAnimalese = () => {
 
   // This function plays a single letter recording
   const playLetterSound = async (letter: string, time: number, audioContext: AudioContext): Promise<number> => {
+    // Check if stop was requested
+    if (stopRequestedRef.current) {
+      throw new Error('Playback stopped by user');
+    }
+    
     // Check for whitespace first
     if (letter === ' ') {
       // Return a pause for whitespace, adjustable by the user
@@ -185,6 +217,14 @@ export const useAnimalese = () => {
       // Create source node
       const source = audioContext.createBufferSource();
       source.buffer = audioBuffer;
+      
+      // Add this source to our active sources list
+      activeSourcesRef.current.push(source);
+      
+      // Remove source from active list when it ends naturally
+      source.onended = () => {
+        activeSourcesRef.current = activeSourcesRef.current.filter(s => s !== source);
+      };
       
       // Create a gain node for volume control
       const gainNode = audioContext.createGain();
@@ -253,6 +293,12 @@ export const useAnimalese = () => {
     }
     
     try {
+      // First stop any ongoing playback
+      stopSound();
+      
+      // Reset stop flag
+      stopRequestedRef.current = false;
+      
       setIsPlaying(true);
       const audioContext = createAudioContext();
       const characters = inputText.split('');
@@ -262,20 +308,40 @@ export const useAnimalese = () => {
       
       // Process each character sequentially
       for (const char of characters) {
+        // Check if stop was requested
+        if (stopRequestedRef.current) {
+          break;
+        }
+        
         // Play the letter and get the next start time
         currentTime = await playLetterSound(char, currentTime, audioContext);
       }
       
-      // Wait until all sounds have finished playing
-      const totalDuration = currentTime - audioContext.currentTime;
-      await new Promise(resolve => setTimeout(resolve, totalDuration * 1000 + 500));
+      // Only wait if we haven't been stopped
+      if (!stopRequestedRef.current) {
+        // Wait until all sounds have finished playing
+        const totalDuration = currentTime - audioContext.currentTime;
+        await new Promise(resolve => setTimeout(resolve, totalDuration * 1000 + 500));
+      }
       
     } catch (error) {
       console.error('Error playing Animalese:', error);
-      alert("There was an error playing the Animalese sound.");
+      if (!stopRequestedRef.current) {
+        alert("There was an error playing the Animalese sound.");
+      }
     } finally {
       setIsPlaying(false);
+      // Clean up any remaining sources
+      if (stopRequestedRef.current) {
+        stopSound();
+      }
     }
+  };
+
+  // Function to request stopping the sound
+  const requestStop = () => {
+    stopRequestedRef.current = true;
+    stopSound();
   };
 
   return {
@@ -289,6 +355,7 @@ export const useAnimalese = () => {
     whitespacePause,
     setWhitespacePause,
     isComplete,
-    generateAnimalese
+    generateAnimalese,
+    stopSound: requestStop
   };
 }; 
