@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Box, Heading, Text, Button } from '@chakra-ui/react'
 import { 
   TextInput, 
@@ -6,11 +6,36 @@ import {
   PitchControl, 
   SpeedControl,
   WhitespacePauseControl
-} from './CreateVoice/index'
-import { useAnimalese } from '../hooks/useAnimalese'
+} from './index'
+import { useAnimalese } from '../../hooks/useAnimalese'
+
+// Keys for localStorage
+const STORAGE_KEYS = {
+  TEXT: 'animalese_text',
+  SILENCE: 'animalese_silence_threshold',
+  PITCH: 'animalese_pitch',
+  SPEED: 'animalese_speed',
+  WHITESPACE: 'animalese_whitespace'
+};
 
 const CreateVoice: React.FC = () => {
-  const [inputText, setInputText] = useState('');
+  // Initialize state with localStorage values if available
+  const getStoredValue = (key: string, defaultValue: any) => {
+    const saved = localStorage.getItem(key);
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return defaultValue;
+      }
+    }
+    return defaultValue;
+  };
+
+  const [inputText, setInputText] = useState(() => 
+    getStoredValue(STORAGE_KEYS.TEXT, '')
+  );
+
   const { 
     isPlaying, 
     silenceThreshold, 
@@ -26,24 +51,49 @@ const CreateVoice: React.FC = () => {
     stopSound
   } = useAnimalese();
 
+  // Load stored values when component mounts
+  useEffect(() => {
+    // Apply stored values to the hook's state
+    const storedSilence = getStoredValue(STORAGE_KEYS.SILENCE, null);
+    const storedPitch = getStoredValue(STORAGE_KEYS.PITCH, null);
+    const storedSpeed = getStoredValue(STORAGE_KEYS.SPEED, null);
+    const storedWhitespace = getStoredValue(STORAGE_KEYS.WHITESPACE, null);
+
+    if (storedSilence !== null) setSilenceThreshold(storedSilence);
+    if (storedPitch !== null) setPitch(storedPitch);
+    if (storedSpeed !== null) setSpeed(storedSpeed);
+    if (storedWhitespace !== null) setWhitespacePause(storedWhitespace);
+  }, [setSilenceThreshold, setPitch, setSpeed, setWhitespacePause]);
+
+  // Handlers with localStorage updates
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputText(e.target.value);
+    const value = e.target.value;
+    setInputText(value);
+    localStorage.setItem(STORAGE_KEYS.TEXT, JSON.stringify(value));
   };
 
   const handleThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSilenceThreshold(parseFloat(e.target.value));
+    const value = parseFloat(e.target.value);
+    setSilenceThreshold(value);
+    localStorage.setItem(STORAGE_KEYS.SILENCE, JSON.stringify(value));
   };
 
   const handlePitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPitch(parseFloat(e.target.value));
+    const value = parseFloat(e.target.value);
+    setPitch(value);
+    localStorage.setItem(STORAGE_KEYS.PITCH, JSON.stringify(value));
   };
 
   const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSpeed(parseFloat(e.target.value));
+    const value = parseFloat(e.target.value);
+    setSpeed(value);
+    localStorage.setItem(STORAGE_KEYS.SPEED, JSON.stringify(value));
   };
 
   const handleWhitespacePauseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setWhitespacePause(parseFloat(e.target.value));
+    const value = parseFloat(e.target.value);
+    setWhitespacePause(value);
+    localStorage.setItem(STORAGE_KEYS.WHITESPACE, JSON.stringify(value));
   };
 
   const handleSubmit = () => {

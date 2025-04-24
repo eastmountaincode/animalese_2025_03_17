@@ -23,7 +23,7 @@ const SilenceThresholdControl: React.FC<SilenceThresholdControlProps> = ({
       <input 
         type="range"
         min="0.1"
-        max="0.2"
+        max="0.4"
         step="0.001"
         value={silenceThreshold}
         onChange={handleThresholdChange}
